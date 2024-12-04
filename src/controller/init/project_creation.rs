@@ -1,7 +1,7 @@
 use std::{env, fs};
 use std::path::Path;
 use crate::controller::init::{build_toolkit, dev_toolkit, test_toolkit, ui_toolkit};
-use crate::{NPM, NPX};
+use crate::{NPM};
 use cliclack::*;
 use std::process::{exit, Command};
 
@@ -12,7 +12,6 @@ pub fn main(project_name: Option<String>) {
     let dev_toolkit_name = get_dev_toolkit_name;
     let test_toolkit_name = get_test_toolkit_name;
     let build_toolkit_name = get_build_toolkit_name;
-
     let project_dir = make_svelte_project(project_name);
 
     add_ui_toolkit(ui_toolkit_name, &project_dir);
@@ -206,15 +205,16 @@ fn add_build_toolkit(toolkit_name: fn() -> &'static str, _project_dir: &str) {
 }
 
 fn make_svelte_project(project_name: String) -> String {
-    let status = Command::new(NPX)
-        .arg("sv")
-        .arg("create")
-        .arg(project_name.clone())
+    let status = Command::new("git")
+        .arg("clone")
+        .arg("--quiet")
+        .arg("https://github.com/gJmry/svelte-template")
+        .arg(&project_name)
         .status()
         .expect("Failed to execute command");
 
     if !status.success() {
-        eprintln!("Error trying to use NPX command");
+        eprintln!("Error trying to clone SvelteKit template");
         exit(1);
     }
 
@@ -234,7 +234,9 @@ fn open_project(project_name: String){
         exit(1);
     }
 
-    env::set_current_dir(project_path).expect("Échec du changement de répertoire");
+    env::set_current_dir(project_path).expect("Failed to change directory");
+
+    fs::remove_dir_all(".git").expect("Error when deleting .git directory");
 
     Command::new(NPM)
         .arg("run")
